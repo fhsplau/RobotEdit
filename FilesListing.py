@@ -17,8 +17,3 @@ class FilesListing():
                 for t in tmp:
                     files_from_svn.append(t)
         return files_from_svn
-
-
-files = FilesListing().listing('C:\\svn\\SP0012\\uat\\trunk\\automatic\\uat_services\\src\\robot\\suite\\Client_Review_Tool')
-for f in files:
-    print f
