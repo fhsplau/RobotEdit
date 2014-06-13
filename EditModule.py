@@ -3,7 +3,26 @@ __author__ = 'kacprzakp'
 
 class EditModule():
     def __init__(self):
-        pass
+        self.pathToTheLibrary = "Library   C:\\svn\\SP0012\\uat\\trunk\\automatic\\uat_services\\src\\robot\\suite\\MigrationLibrary.txt\n"
+
+    def addMigrationLibrary(self, settings):
+        settings.insert(len(settings) - 1, self.pathToTheLibrary)
+        return settings
+
+    def addSelenium2Library(self,settings):
+        for line in settings:
+            if 'SeleniumLibrary' in line:
+                index = settings.index(line)
+                settings[index] = 'Library    Selenium2Library\n'
+        return settings
+
+    def changeSettings(self, settings):
+        # add migration library
+        # TODO configfile
+        # TODO lambda
+        settings = self.addSelenium2Library(settings)
+        settings = self.addMigrationLibrary(settings)
+        return settings
 
     def edit(self, path):
         newContent = []
@@ -14,18 +33,13 @@ class EditModule():
         tests = self.takeTests(content)
         keywords = self.takeKeywords(content)
 
-        # add migration library
-        #TODO configfile
-        pathToTheLibrary = "Library   C:\\svn\\SP0012\\uat\\trunk\\automatic\\uat_services\\src\\robot\\suite\\MigrationLibrary.txt\n"
-        settings.insert(len(settings) - 1, pathToTheLibrary)
-
-        print settings
+        settings = self.changeSettings(settings)
 
         #consolidate
-        newContent = newContent.extend(settings)
-        newContent = newContent.extend(variables)
-        newContent = newContent.extend(tests)
-        newContent = newContent.extend(keywords)
+        newContent.extend(settings)
+        newContent.extend(variables)
+        newContent.extend(tests)
+        newContent.extend(keywords)
 
         return newContent
 
