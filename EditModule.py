@@ -4,16 +4,104 @@ import platform
 
 class EditModule():
     def __init__(self):
-        # TODO configfile
         self.pathToTheLibrary = "Library   C:\\svn\\SP0012\\uat\\trunk\\automatic\\uat_services\\src\\robot\\suite\\" \
                                 + "MigrationLibrary.txt\n"
-        # double click element must be before click element
-        self.incompatibleKeywords = ['open browser', 'start selenium server', 'stop selenium server', 'double click element', 'click element', 'choose file', 'click button', 'click image', 'click link', 'go back', 'open context menu', 'press key', 'select all from list', 'select radio button', 'submit form', 'add location strategy', 'call selenium api', 'capture screenshot', 'drag and drop', 'press key native', 'wait until page loaded']
+        self.incompatibleKeywords = ['open browser',
+                                     'start selenium server',
+                                     'stop selenium server',
+                                     'double click element',
+                                     'click element',
+                                     'choose file',
+                                     'click button',
+                                     'click image',
+                                     'click link',
+                                     'go back',
+                                     'open context menu',
+                                     'press key',
+                                     'select all from list',
+                                     'select radio button',
+                                     'submit form',
+                                     'add location strategy',
+                                     'call selenium api',
+                                     'capture screenshot',
+                                     'drag and drop',
+                                     'press key native',
+                                     'wait until page loaded']
 
         if platform.system() == 'Windows':
             self.newLineChar = '\n'
         else:
             self.newLineChar = '\r\n'
+
+    def writeFile(self, path, content):
+        # TODO exception
+        updated_file = open(path, "w")
+        updated_file.writelines(content)
+        updated_file.close()
+
+    def edit(self, path):
+        newContent = []
+        content = self.takeContentFromFile(path)
+        sectionsOrder = ['settings','variables','testCases','keywords']
+        sections = self.splitToSections(content)
+
+        if sections['settings'] is not None:
+            sections['settings'] = self.changeSettings(sections['settings'])
+
+        if sections['keywords'] is not None:
+            sections['keywords'] = self.changeKeywords(sections['keywords'])
+
+        for section in sectionsOrder:
+            if sections[section] is not None:
+                newContent.extend(sections[section])
+
+        return newContent
+
+    def takeContentFromFile(self, path):
+        # TODO exception
+        new_file = open(path, "r")
+        content = new_file.readlines()
+        new_file.close()
+        return content
+
+    def splitToSections(self,content):
+        sections = {'settings':None,'variables':None, 'testCases':None,'keywords':None}
+        availableSections = self.availableSectionsInContent(content)
+
+        iterNumber = 0
+        for section in availableSections:
+            sections[self.createKey(section)] = content[content.index(section):self.endIndex(availableSections, content, iterNumber)]
+            iterNumber+=1
+        return sections
+
+    def availableSectionsInContent(self, content):
+        sections = []
+        listWithSectionsNames = ['*** Settings ***' + self.newLineChar,
+                                 '*** Variables ***' + self.newLineChar,
+                                 '*** Test Cases ***' + self.newLineChar,
+                                 '*** Keywords ***' + self.newLineChar]
+        for section in listWithSectionsNames:
+            if section in content:
+                sections.append(section)
+        return sections
+
+    def createKey(self, section):
+        tmp = section.replace('*', '').replace(self.newLineChar, '').replace(' ', '')
+        key = tmp[0].lower() + tmp[1:]
+        return key
+
+    def endIndex(self, availableSections, content, iterNumber):
+        if iterNumber == len(availableSections) - 1:
+            indexOfEnd = len(content)
+        else:
+            indexOfEnd = content.index(availableSections[iterNumber + 1])
+        return indexOfEnd
+
+    def changeSettings(self, settings):
+        # TODO lambda
+        settings = self.addSelenium2Library(settings)
+        settings = self.addMigrationLibrary(settings)
+        return settings
 
     def addMigrationLibrary(self, settings):
         if self.pathToTheLibrary not in settings:
@@ -26,64 +114,6 @@ class EditModule():
                 index = settings.index(line)
                 settings[index] = 'Library    Selenium2Library' + self.newLineChar
         return settings
-
-    def changeSettings(self, settings):
-        # TODO lambda
-        settings = self.addSelenium2Library(settings)
-        settings = self.addMigrationLibrary(settings)
-        return settings
-
-    def edit(self, path):
-        newContent = []
-        content = self.takeContentFromFile(path)
-        # TODO dictionary
-        settings = self.takeSettings(content)
-        variables = self.takeVariables(content)
-        tests = self.takeTests(content)
-        keywords = self.takeKeywords(content)
-
-        settings = self.changeSettings(settings)
-        keywords = self.changeKeywords(keywords)
-
-        # consolidate
-        newContent.extend(settings)
-        newContent.extend(variables)
-        newContent.extend(tests)
-        newContent.extend(keywords)
-
-        return newContent
-
-    def takeContentFromFile(self, path):
-        # TODO exception
-        new_file = open(path, "r")
-        content = new_file.readlines()
-        new_file.close()
-        return content
-
-    def takeSettings(self, content):
-        indexOfSettings = content.index('*** Settings ***' + self.newLineChar)
-        indexOfVariables = content.index('*** Variables ***' + self.newLineChar)
-        return content[indexOfSettings:indexOfVariables]
-
-    def takeVariables(self, content):
-        indexOfVariables = content.index('*** Variables ***' + self.newLineChar)
-        indexOfTestCases = content.index('*** Test Cases ***' + self.newLineChar)
-        return content[indexOfVariables:indexOfTestCases]
-
-    def takeTests(self, content):
-        indexOfTestCases = content.index('*** Test Cases ***' + self.newLineChar)
-        indexOfKeywords = content.index('*** Keywords ***' + self.newLineChar)
-        return content[indexOfTestCases:indexOfKeywords]
-
-    def takeKeywords(self, content):
-        indexOfKeywords = content.index('*** Keywords ***' + self.newLineChar)
-        return content[indexOfKeywords:len(content)]
-
-    def writeFile(self, path, content):
-        # TODO exception
-        updated_file = open(path, "w")
-        updated_file.writelines(content)
-        updated_file.close()
 
     def changeKeywords(self, keywords):
         lineNumber = 0
