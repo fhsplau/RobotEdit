@@ -7,11 +7,9 @@ class EditModule():
         # TODO configfile
         self.pathToTheLibrary = "Library   C:\\svn\\SP0012\\uat\\trunk\\automatic\\uat_services\\src\\robot\\suite\\" \
                                 + "MigrationLibrary.txt\n"
-        self.incompatibleKeywords = ['Open Browser',
-                                     'Start Selenium Server',
-                                     'Stop Selenium Server',
-                                     'Click Element',
-                                     'Double Click Element']
+        # double click element must be before click element
+        self.incompatibleKeywords = ['open browser', 'start selenium server', 'stop selenium server', 'double click element', 'click element', 'choose file', 'click button', 'click image', 'click link', 'go back', 'open context menu', 'press key', 'select all from list', 'select radio button', 'submit form', 'add location strategy', 'call selenium api', 'capture screenshot', 'drag and drop', 'press key native', 'wait until page loaded']
+
         if platform.system() == 'Windows':
             self.newLineChar = '\n'
         else:
@@ -88,30 +86,29 @@ class EditModule():
         updated_file.close()
 
     def changeKeywords(self, keywords):
-        lineNumber=0
+        lineNumber = 0
         for line in keywords:
-            if 'MigrationLibrary.' not in line and line[0] != '#':
-                for incompatibleKeyword in self.incompatibleKeywords:
-                    if  incompatibleKeyword in line:
-                        keywords = self.migrateLine(lineNumber,incompatibleKeyword, line, keywords)
-            lineNumber+=1
+            if self.notMigratedLine(line):
+                word = [tmpWord for tmpWord in line.split('  ') if len(tmpWord)>0][0].replace('\n','').replace('\t','')
+                if word[0]==' ':
+                    word = word[1:]
+                if len(word) > 0 and word.lower() in self.incompatibleKeywords:
+                    keywords = self.migrateLine(word, lineNumber, keywords)
+            lineNumber += 1
         return keywords
 
-    def migrateLine(self, lineNumber,keyword, line, keywords):
-        if keyword == 'Start Selenium Server' or keyword == 'Stop Selenium Server':
+    def notMigratedLine(self,line):
+        return 'MigrationLibrary.' not in line and line[0] != '#' and line[0] != '\n' and (
+                            line[0] == ' ' or line[0] == '\t')
+
+    def migrateLine(self, keyword, lineNumber, keywords):
+        line = keywords[lineNumber]
+        if keyword.lower() == 'start selenium server' or keyword.lower() == 'stop selenium server':
             updatedLine = '#' + line
         else:
-            firstChars = line[0:line.index(keyword)]
-            updatedLine = firstChars \
+            updatedLine = line[0:line.index(keyword)] \
                           + 'MigrationLibrary.' \
                           + keyword \
-                          + line[(len(firstChars + keyword)):len(line)]
+                          + line[(len(line[0:line.index(keyword)] + keyword)):len(line)]
         keywords[lineNumber] = updatedLine
         return keywords
-
-
-path = "/Users/paverell/tests/Client_Review_Tool/3.2 Comments/SP0012_3.2.5_View_Comments.txt"
-# newFile = "C:\\svn\\SP0012\\uat\\trunk\\automatic\\uat_services\\src\\robot\\suite\\Client_Review_Tool\\3.2 Comments\\SP0012_3.2.5_View_Comments_new.txt"
-new_object = EditModule()
-editedContent = new_object.edit(path)
-new_object.writeFile(path, editedContent)
