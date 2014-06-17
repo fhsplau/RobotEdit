@@ -4,8 +4,7 @@ import platform
 
 class EditModule():
     def __init__(self):
-        self.pathToTheLibrary = "Library   C:\\svn\\SP0012\\uat\\trunk\\automatic\\uat_services\\src\\robot\\suite\\" \
-                                + "MigrationLibrary.txt\n"
+        self.pathToTheLibrary = "Resource   ${BASEDIR}/src/robot/suite/MigrationLibrary.txt\n"
         self.incompatibleKeywords = ['open browser',
                                      'start selenium server',
                                      'stop selenium server',
@@ -27,6 +26,14 @@ class EditModule():
                                      'drag and drop',
                                      'press key native',
                                      'wait until page loaded']
+
+        self.seleniumKeywords = ['close all browsers',
+                                 'set selenium timeout',
+                                 'go to',
+                                 'delete all cookies',
+                                 'wait until page contains element',
+                                 'input text',
+                                 'page should not contain element']
 
         if platform.system() == 'Windows':
             self.newLineChar = '\n'
@@ -119,11 +126,20 @@ class EditModule():
         lineNumber = 0
         for line in keywords:
             if self.notMigratedLine(line):
-                word = [tmpWord for tmpWord in line.split('  ') if len(tmpWord)>0][0].replace('\n','').replace('\t','')
-                if word[0]==' ':
-                    word = word[1:]
-                if len(word) > 0 and word.lower() in self.incompatibleKeywords:
-                    keywords = self.migrateLine(word, lineNumber, keywords)
+                words = [tmpWord for tmpWord in line.split('  ') if len(tmpWord)>0]
+                for word in words:
+                    word = word.replace('\n','').replace('\t','')
+                    if word[0]==' ':
+                        word = word[1:]
+                    if word.lower() in self.incompatibleKeywords:
+                        keywords = self.migrateLine(word, lineNumber, keywords)
+                        break
+                    elif word.lower() in self.seleniumKeywords:
+                        keywords = self.migrateLine(word, lineNumber, keywords, 'Selenium2Library.')
+                        break
+                    elif 'SeleniumLibrary' in word:
+                        keywords[lineNumber] = line.replace('SeleniumLibrary','Selenium2Library')
+                        break
             lineNumber += 1
         return keywords
 
@@ -131,14 +147,11 @@ class EditModule():
         return 'MigrationLibrary.' not in line and line[0] != '#' and line[0] != '\n' and (
                             line[0] == ' ' or line[0] == '\t')
 
-    def migrateLine(self, keyword, lineNumber, keywords):
+    def migrateLine(self, keyword, lineNumber, keywords,libraryName='MigrationLibrary.'):
         line = keywords[lineNumber]
         if keyword.lower() == 'start selenium server' or keyword.lower() == 'stop selenium server':
             updatedLine = '#' + line
         else:
-            updatedLine = line[0:line.index(keyword)] \
-                          + 'MigrationLibrary.' \
-                          + keyword \
-                          + line[(len(line[0:line.index(keyword)] + keyword)):len(line)]
+            updatedLine = line.replace(keyword,libraryName+keyword)
         keywords[lineNumber] = updatedLine
         return keywords
