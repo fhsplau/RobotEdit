@@ -55,6 +55,12 @@ class EditModule():
         if sections['settings'] is not None:
             sections['settings'] = self.changeSettings(sections['settings'])
 
+        if sections['variables'] is not None:
+            sections['variables'] = self.changeVariables(sections['variables'])
+
+        if sections['testCases'] is not None:
+            sections['testCases'] = self.changeKeywords(sections['testCases'])
+
         if sections['keywords'] is not None:
             sections['keywords'] = self.changeKeywords(sections['keywords'])
 
@@ -94,8 +100,7 @@ class EditModule():
 
     def createKey(self, section):
         tmp = section.replace('*', '').replace(self.newLineChar, '').replace(' ', '')
-        key = tmp[0].lower() + tmp[1:]
-        return key
+        return tmp[0].lower() + tmp[1:]
 
     def endIndex(self, availableSections, content, iterNumber):
         if iterNumber == len(availableSections) - 1:
@@ -110,16 +115,16 @@ class EditModule():
         settings = self.addMigrationLibrary(settings)
         return settings
 
-    def addMigrationLibrary(self, settings):
-        if self.pathToTheLibrary not in settings:
-            settings.insert(len(settings) - 1, self.pathToTheLibrary)
-        return settings
-
     def addSelenium2Library(self, settings):
         for line in settings:
             if 'SeleniumLibrary' in line:
                 index = settings.index(line)
                 settings[index] = 'Library    Selenium2Library' + self.newLineChar
+        return settings
+
+    def addMigrationLibrary(self, settings):
+        if self.pathToTheLibrary not in settings:
+            settings.insert(len(settings) - 1, self.pathToTheLibrary)
         return settings
 
     def changeKeywords(self, keywords):
@@ -129,13 +134,10 @@ class EditModule():
                 words = [tmpWord for tmpWord in line.split('  ') if len(tmpWord)>0]
                 for word in words:
                     word = word.replace('\n','').replace('\t','')
-                    if word[0]==' ':
+                    if len(word) > 0 and word[0]==' ':
                         word = word[1:]
-                    if word.lower() in self.incompatibleKeywords:
+                    if len(word) > 0 and word.lower() in self.incompatibleKeywords:
                         keywords = self.migrateLine(word, lineNumber, keywords)
-                        break
-                    elif word.lower() in self.seleniumKeywords:
-                        keywords = self.migrateLine(word, lineNumber, keywords, 'Selenium2Library.')
                         break
                     elif 'SeleniumLibrary' in word:
                         keywords[lineNumber] = line.replace('SeleniumLibrary','Selenium2Library')
@@ -155,3 +157,10 @@ class EditModule():
             updatedLine = line.replace(keyword,libraryName+keyword)
         keywords[lineNumber] = updatedLine
         return keywords
+
+    def changeVariables(self, variables):
+        for line in variables:
+            if 'firefox' in line.lower():
+                variables[variables.index(line)] = '#' + line
+                break
+        return variables
