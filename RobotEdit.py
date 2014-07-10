@@ -16,10 +16,6 @@ def main(argv):
 
     path = argv[1]
 
-    #svn revert
-    os.system('svn revert --depth=infinity '+path)
-    os.system('svn update '+path)
-
     files = FilesListing().listing(path)
     for f in files:
         new_object = EditModule()

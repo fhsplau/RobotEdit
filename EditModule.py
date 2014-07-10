@@ -25,7 +25,8 @@ class EditModule():
                                      'capture screenshot',
                                      'drag and drop',
                                      'press key native',
-                                     'wait until page loaded']
+                                     'wait until page loaded',
+                                     'check whether selenium is stopped']
 
         self.seleniumKeywords = ['close all browsers',
                                  'set selenium timeout',
@@ -89,7 +90,7 @@ class EditModule():
 
     def availableSectionsInContent(self, content):
         sections = []
-        listWithSectionsNames = ['*** Settings ***' + self.newLineChar,
+        listWithSectionsNames = ["*** Settings ***" + self.newLineChar,
                                  '*** Variables ***' + self.newLineChar,
                                  '*** Test Cases ***' + self.newLineChar,
                                  '*** Keywords ***' + self.newLineChar]
@@ -151,9 +152,11 @@ class EditModule():
 
     def migrateLine(self, keyword, lineNumber, keywords,libraryName='MigrationLibrary.'):
         line = keywords[lineNumber]
-        if keyword.lower() == 'start selenium server' or keyword.lower() == 'stop selenium server':
+        if keyword.lower() == 'start selenium server' or keyword.lower() == 'stop selenium server' or keyword.lower()== 'check whether selenium is stopped':
             updatedLine = '#' + line
         else:
+            if keyword.lower() == 'open browser':
+                line = line.replace('firefox','${BROWSER}')
             updatedLine = line.replace(keyword,libraryName+keyword)
         keywords[lineNumber] = updatedLine
         return keywords
